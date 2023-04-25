@@ -223,9 +223,9 @@ function ShowGrfTH() {
 			xlabel: 'Date',
 			ylabel: 'Temp(C&deg;)',
 			y2label: 'H(%)',
-			colors: ['green', 'blue'],
+			colors: ['green', 'blue', 'red'],
 			series : { 'H(%)': { axis: 'y2' } },
-			labels: ['Date', 'T(°C)', 'H(%)'],
+			labels: ['Date', 'T(°C)', 'H(%)', 'RelayStatusSum'],
 			labelsDiv: $('labdiv'),
 			legend: 'always',  // "follow"
 			digitsAfterDecimal: 3,
@@ -262,7 +262,7 @@ function convertArrayOfObjectsToCSV(value){
 	result = '';
 	if(deviceName != null)
 		result += deviceName+lineDelimiter;
-	result += 'Time-Data=(A2/86400)+25569'+columnDelimiter+'Temp'+columnDelimiter+'Humi'+columnDelimiter+'Vbat'+lineDelimiter;
+	result += 'Time-Data=(A2/86400)+25569'+columnDelimiter+'Temp'+columnDelimiter+'Humi'+columnDelimiter+'RelayStatusSum'+columnDelimiter+'Vbat'+lineDelimiter;
 	data.reduceRight(function(a, i) {
 		ctr = 0;
 		keys.forEach(function(key){
@@ -330,14 +330,14 @@ function show_graph() {
 		if($('thvbat').checked) {
 			memo.reduceRight(function(a, b)	{ 
 			if(hideldate) {
-				if(b[0] > 1609459200 && b[0] < 2255486400) datau.push([new Date(b[0]*1000.0+localOffset), b[3]/1000.0]); 
-			} else datau.push([new Date(b[0]*1000.0+localOffset), b[3]/1000.0]); 
+				if(b[0] > 1609459200 && b[0] < 2255486400) datau.push([new Date(b[0]*1000.0+localOffset), b[4]/1000.0]); 
+			} else datau.push([new Date(b[0]*1000.0+localOffset), b[4]/1000.0]); 
 			return a+1;}, 1 );
 		} else {
 			memo.reduceRight(function(a, b)	{ 
 			if(hideldate) {
-				if(b[0] > 1609459200 && b[0] < 2255486400) datau.push([new Date(b[0]*1000.0+localOffset), b[1], b[2]]); 
-			} else datau.push([new Date(b[0]*1000.0+localOffset), b[1], b[2]]);
+				if(b[0] > 1609459200 && b[0] < 2255486400) datau.push([new Date(b[0]*1000.0+localOffset), b[1], b[2], b[3]]); 
+			} else datau.push([new Date(b[0]*1000.0+localOffset), b[1], b[2], b[3]]);
 			return a+1;}, 1 );
 		}
 		Clog('Loaded '+ datau.length + ' samples.')
@@ -439,14 +439,15 @@ function connectDeviceAndCacheCharacteristic(device) {
 						let cnt = value.getUint16(1, true);
 						let tc = value.getUint32(3, true);
 						let tm = value.getInt16(7, true) / 100.0;
-						let hm = value.getUint16(9, true) / 100.0;
+						let hm = value.getUint8(9, true);
+						let rs = value.getUint8(10, true);
 						let vb = value.getUint16(11, true);
 						/* Slow speed on some devices!
 						let dt = new Date(tc*1000);
-						console.log('Memo '+((dt.toISOString().slice(0, -1)).replace('T',' ')).replace('.000','')+' - Vbat: '+vb+' mV , Temp: '+tm+'°C, Humi: '+hm+'%, Count: '+cnt);
+						console.log('Memo '+((dt.toISOString().slice(0, -1)).replace('T',' ')).replace('.000','')+' - Vbat: '+vb+' mV , Temp: '+tm+'°C, Humi: '+hm+'%, RelayStatus: '+rs+'%, Count: '+cnt);
 						*/
 						log('Read Count: '+cnt);
-						memo.push([tc,tm,hm,vb]);
+						memo.push([tc,tm,hm,rs,vb]);
 						show_on = 1;
 					} else if(len >= 3) {
 						console.log('Read count: '+ memo.length);
